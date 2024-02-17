@@ -169,6 +169,7 @@ only_unique_cities_after <- sort(unique(administradores$Ciudad))
 #   "Municipio" = municipio_final
 # )
 
+# 
 
 # Pasar a excel ####
 write.xlsx(
