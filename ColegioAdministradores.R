@@ -164,10 +164,10 @@ only_unique_cities_after <- sort(unique(administradores$Ciudad))
 #   }
 # }
 
-municipios_join_table <- data.frame(
-  "Ciudad" = only_unique_cities_after,
-  "Municipio" = municipio_final
-)
+# municipios_join_table <- data.frame(
+#   "Ciudad" = only_unique_cities_after,
+#   "Municipio" = municipio_final
+# )
 
 
 # Pasar a excel ####
