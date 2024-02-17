@@ -6,6 +6,7 @@ source("functions.R")
 # Leer archivos y crear las finchas de administrador ####
 administradores_Madrid <- read_file("Data_Input/ColegioAdministradoresFincaCortado.txt")
 administradores_Madrid2 <- strsplit(administradores_Madrid, "</td></tr>")
+municipios_Madrid <- sort(unlist(strsplit(read_file("Data_Input/MadridMunicipios.txt"), ", ")))
 
 # Bucle para crear el data frame ####
 
@@ -79,6 +80,95 @@ for(a in 1:length(administradores_Madrid2[[1]])){
   
   administradores <- rbind(administradores, the_administrator)
 }
+
+# Script para lograr homologar ciudades ####
+
+only_unique_cities <- sort(unique(administradores$Ciudad))
+
+# Quitar espacios en blanco
+administradores$Ciudad <- trimws(administradores$Ciudad)
+
+# Corregir manualmente algunos errores
+administradores$Ciudad <- ifelse(administradores$Ciudad == "<strong>provincia</strong>: Madrid<br>", "Madrid", administradores$Ciudad)
+
+# Cambiar el código postal 28038 por "Madrid"
+cp_and_no_city <- which(!is.na(as.numeric(only_unique_cities)))
+administradores$Ciudad <- ifelse(administradores$Ciudad == only_unique_cities[cp_and_no_city], "Madrid", administradores$Ciudad)
+
+# Quitar paréntesis
+parentesis <- grep("\\(", administradores$Ciudad, value = FALSE)
+administradores$Ciudad <- ifelse(grepl("\\(", administradores$Ciudad) == TRUE,
+                                 sub(" \\(.+", "", administradores$Ciudad),
+                                 administradores$Ciudad
+                                 )
+
+# Quitar guiones (solo se mantiene la primera ciudad)
+guiones <- grep("-", administradores$Ciudad, value = FALSE)
+administradores$Ciudad <- ifelse(grepl("-", administradores$Ciudad) == TRUE,
+                                 sub(" -.+", "", administradores$Ciudad),
+                                 administradores$Ciudad
+                                )
+# Cambiar "S." por "San"
+S_punto <- grep("S\\.", administradores$Ciudad, value = FALSE)
+administradores$Ciudad <- sub("S\\.", "San ", administradores$Ciudad)
+
+# Cambiar "s." por "Sebastián"
+administradores$Ciudad <- sub("s\\.", "Sebastián", administradores$Ciudad)
+
+# Cambiar "L." por "Lorenzo"
+administradores$Ciudad <- sub("L\\.", "Lorenzo", administradores$Ciudad)
+
+# Quitar dos ciudades unidas por " y " o " Y "
+y_union <- grep(" y | Y ", administradores$Ciudad, value = FALSE)
+administradores$Ciudad <- sub(" Y .+", "", administradores$Ciudad)
+
+# Arreglar los Fernandos
+fernandos <- grep(" Fdo\\. | Ferndº | Fdo\\.", administradores$Ciudad, value = FALSE)
+administradores$Ciudad <- sub(" Fdo\\. | Ferndº | Fdo\\.", " Fernando ", administradores$Ciudad)
+
+# Cambiar "Las Rozas" por "Las Rozas De Madrid"
+las_rozas <- grep("Las Rozas$", administradores$Ciudad, value = FALSE)
+administradores$Ciudad <- sub("Las Rozas$", "Las Rozas De Madrid", administradores$Ciudad)
+
+
+# Errores comunes
+errores <- c("Alcala","Alcorcon", "Alarcon", "Agustin", "Avila", "Chinchon", "Alamo", "^El Escorial", "Griñon", "Humanes", "Leganes", "Mostoles", "Pozuelo$", "Agust\\.", "Martin", "Sebastian", "Torrejon", "Odon")
+correctos <- c("Alcalá","Alcorcón", "Alarcón","Agustín", "Ávila", "Chinchón", "Álamo", "San Lorenzo De El Escorial", "Griñón", "Humanes De Madrid", "Leganés", "Móstoles", "Pozuelo De Alarcón", "Agustín ", "Martín", "Sebastián", "Torrejón", "Odón")
+tabla_de_correcciones <- data.frame(errores, correctos)
+for(e in 1:length(administradores$Ciudad)){
+  for(c in 1:length(tabla_de_correcciones$errores)){
+    administradores$Ciudad[e] <- ifelse(
+      grepl(tabla_de_correcciones$errores[c], administradores$Ciudad[e]),
+      sub(tabla_de_correcciones$errores[c], tabla_de_correcciones$correctos[c], administradores$Ciudad[e]),
+      administradores$Ciudad[e])
+  }
+}
+
+# Un espacio
+administradores$Ciudad <- gsub("  ", " ", administradores$Ciudad)
+
+# Repetir title_form
+administradores$Ciudad <- sapply(administradores$Ciudad, title_form)
+
+# Repetir y revisar
+only_unique_cities_after <- sort(unique(administradores$Ciudad))
+
+# Asignar municipio de la lista oficial municipios_Madrid
+# municipio_final <- NULL
+# for(m in 1:length(only_unique_cities_after)){
+#   for(d in 1:length(municipios_Madrid)){
+#     if(agrepl(only_unique_cities_after[m], municipios_Madrid[d], max.distance = 5, costs = 4)){
+#       municipio_final[m] <- municipios_Madrid[d]
+#       break
+#     }
+#   }
+# }
+
+municipios_join_table <- data.frame(
+  "Ciudad" = only_unique_cities_after,
+  "Municipio" = municipio_final
+)
+
 
 # Pasar a excel ####
 write.xlsx(
