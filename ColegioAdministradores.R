@@ -169,7 +169,39 @@ only_unique_cities_after <- sort(unique(administradores$Ciudad))
 #   "Municipio" = municipio_final
 # )
 
-# 
+# Grafico
+grafico_01 <- administradores %>% 
+  group_by(Ciudad) %>% 
+  summarise("Total" = n()) %>% 
+  arrange(desc(Total)) %>% 
+  slice_head(n = 15) %>% 
+  ggplot(., aes(reorder(Ciudad, Total), Total, label = Total))+
+  geom_col(fill = "#f3b54a")+
+  geom_text(aes(y=250), fontface="bold", color="#393b45") +
+  labs(title="Número de Administradores de Finca en la Comunidad de Madrid",
+       subtitle = "Quince primeros municipios",
+       # y = "Euros por metro cuadrado",
+       # x = "",
+       caption = "Fuente: Colegio de Administradores de Finca"
+  )+
+  coord_flip()+
+  theme(
+    plot.caption = element_text(hjust = 0, face= "italic", color="#393b45"), #Default is hjust=1
+    plot.title.position = "plot", #NEW parameter. Apply for subtitle too.
+    plot.caption.position =  "plot",
+    title = element_text(size = 10),
+    text = element_text(color="#393b45", face="bold"),
+    axis.text.y = element_text(size = 10),
+    axis.text.x = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    legend.position = "none",
+    plot.background = element_rect(fill="#d8d9de"),
+    panel.background = element_rect(fill="#d8d9de"),
+    panel.grid = element_line(color="#d8d9de")
+  )
+ggsave("Data_Output/administradores.png", grafico_01, height = 10, width = 16, units = "cm")
+
 
 # Pasar a excel ####
 write.xlsx(
